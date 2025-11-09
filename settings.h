@@ -38,4 +38,4 @@ private:
     bool darkTheme = true;
 };
 
-#endif // SETTINGS_H
+#endif

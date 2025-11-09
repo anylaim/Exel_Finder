@@ -17,7 +17,7 @@ Settings::Settings(QWidget *parent)
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowTitle(tr("Settings"));
 
-    // поставить иконки на кнопки (иконки положи в папку resources.qrc)
+    // поставить иконки на кнопки
     ui->Theme_button->setIcon(QIcon(":/icons/theme.png"));
     ui->Languige_button->setIcon(QIcon(":/icons/lang.png"));
     ui->SizeUp_button->setIcon(QIcon(":/icons/plus.png"));
@@ -87,7 +87,6 @@ void Settings::on_Languige_button_clicked()
 
     QString lang = ru ? "ru" : "en";
 
-    // сохраняем выбор
     QSettings settings("Nanagi_Sleep", "Exel_Finder");
     settings.setValue("language", lang);
 

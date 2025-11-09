@@ -79,4 +79,4 @@ private:
     void showResultContextMenu(const QPoint &pos);
 };
 
-#endif // MAINWINDOW_H
+#endif

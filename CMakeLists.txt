@@ -8,18 +8,18 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# --- Поиск Qt ---
+# Поиск Qt
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets Core LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core LinguistTools)
 
-# --- Подключение QXlsx ---
+# Подключение QXlsx
 add_subdirectory(QXlsx/QXlsx)
 
-# --- Пути к исполняемым файлам Qt Linguist ---
+# Пути к исполняемым файлам Qt Linguist
 set(LUPDATE_EXE "C:/Qt/6.8.1/msvc2022_64/bin/lupdate.exe")
 set(LRELEASE_EXE "C:/Qt/6.8.1/msvc2022_64/bin/lrelease.exe")
 
-# --- Источники проекта ---
+# Источники проекта
 set(PROJECT_SOURCES
     main.cpp
     mainwindow.cpp
@@ -33,7 +33,7 @@ set(PROJECT_SOURCES
 
 add_executable(Exel_Finder ${PROJECT_SOURCES})
 
-# --- Переводы ---
+# Переводы
 set(TRANSLATIONS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/translations)
 file(MAKE_DIRECTORY ${TRANSLATIONS_DIR})
 
@@ -80,7 +80,7 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/translations.qrc "  </qresource>\n</RCC>
 qt_add_resources(TRANSLATIONS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/translations.qrc)
 target_sources(Exel_Finder PRIVATE ${TRANSLATIONS_RESOURCE})
 
-# --- Линковка ---
+# Линковка
 target_link_libraries(Exel_Finder PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Core
@@ -90,5 +90,38 @@ target_link_libraries(Exel_Finder PRIVATE
 set_target_properties(Exel_Finder PROPERTIES WIN32_EXECUTABLE TRUE)
 
 
-# --- Финализация ---
+# Финализация
 qt_finalize_executable(Exel_Finder)
+
+if(WIN32)
+    # Находим windeployqt
+    find_program(WINDEPLOYQT_EXE windeployqt HINTS "C:/Qt/6.8.1/msvc2022_64/bin")
+
+    if(WINDEPLOYQT_EXE)
+        # Создаем кастомную цель для деплоя
+        add_custom_command(TARGET Exel_Finder POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/deploy"
+            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:Exel_Finder>" "${CMAKE_BINARY_DIR}/deploy/"
+            COMMAND ${WINDEPLOYQT_EXE} --release --no-translations --no-system-d3d-compiler "$<TARGET_FILE_DIR:Exel_Finder>/deploy/$<TARGET_FILE_NAME:Exel_Finder>"
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            COMMENT "Deploying Qt dependencies for Exel_Finder..."
+        )
+
+        # Дополнительная цель для очистки ненужных DLL
+        add_custom_command(TARGET Exel_Finder POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E remove
+                "${CMAKE_BINARY_DIR}/deploy/Qt6Network.dll"
+                "${CMAKE_BINARY_DIR}/deploy/Qt6Qml.dll"
+                "${CMAKE_BINARY_DIR}/deploy/Qt6Quick.dll"
+                "${CMAKE_BINARY_DIR}/deploy/Qt6Svg.dll"
+                "${CMAKE_BINARY_DIR}/deploy/Qt6Xml.dll"
+                "${CMAKE_BINARY_DIR}/deploy/D3Dcompiler_47.dll"
+                "${CMAKE_BINARY_DIR}/deploy/opengl32sw.dll"
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            COMMENT "Removing unnecessary dependencies..."
+        )
+
+    else()
+        message(WARNING "windeployqt not found - skipping automatic deployment")
+    endif()
+endif()

@@ -566,7 +566,10 @@ bool MainWindow::searchSubstringsInExcel(const QString &filePath, const QStringL
             if (cellText.isEmpty()) continue;
 
             for (const QString &substring : substrings) {
-                if (cellText.contains(substring, Qt::CaseInsensitive)) {
+                // Проверяем начало строки или позицию после пробела/новой строки
+                if (cellText.startsWith(substring, Qt::CaseInsensitive) ||
+                    cellText.contains(QString(" %1").arg(substring), Qt::CaseInsensitive) ||
+                    cellText.contains(QString("\n%1").arg(substring), Qt::CaseInsensitive)) {
                     if (!foundSubstrings.contains(substring)) {
                         foundSubstrings.append(substring);
                     }
@@ -673,16 +676,32 @@ void MainWindow::adjustFontSize(int delta)
 
 void MainWindow::on_FindFolder_button_clicked()
 {
+    // Берем текущий путь из текстового поля
+    QString currentPath = ui->FolderPath_text->text();
+
+    // Если поле пустое, используем домашнюю папку
+    if (currentPath.isEmpty()) {
+        currentPath = QDir::homePath();
+    }
+
+    // Проверяем, существует ли путь
+    QDir dir(currentPath);
+    if (!dir.exists()) {
+        currentPath = QDir::homePath();
+    }
 
     QString folderPath = QFileDialog::getExistingDirectory(
         this,
         tr("Choose folder"),
-        QDir::homePath(),
+        currentPath,  // Используем текущий путь как начальный
         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
         );
 
     if (!folderPath.isEmpty()) {
         ui->FolderPath_text->setText(folderPath);
+
+        QSettings settings("Nanagi_Sleep", "Exel_Finder");
+        settings.setValue("lastFolderPath", folderPath);
     }
 }
 
